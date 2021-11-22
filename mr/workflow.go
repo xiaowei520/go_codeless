@@ -410,9 +410,9 @@ func DoPriorityGroup(ruleFlow []interface{}) {
 						}
 					}, func(item interface{}, writer Writer, cancel func(error)) {
 						sOutput := DoRule(item)
-						//.... 单一优先级、最高结果
+						//.... max priority
 						atomic.AddUint32(&sumPriority, sOutput.Priority)
-						//迭代++  2^(n-1) + 2^(n-2) ...    n=len()
+						// 2^(n-1) + 2^(n-2) ... n=len()
 						atomic.AddUint32(&judge, 2<<(uint32(len(ruleFlow))-atomic.AddUint32(&iterator, 1)))
 
 						fmt.Println("total", sumPriority, " iterator", iterator, " judge ", judge)

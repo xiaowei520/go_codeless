@@ -45,7 +45,6 @@ func TestFinish(t *testing.T) {
 	//			RuleC{State: Parallel, Priority: 8},
 	//		},},
 	//})
-	//fmt.Println(r)
 	fmt.Println("第二次尝试---retry")
 	//return
 	r2 := WorkFlowManager([]interface{}{
@@ -59,7 +58,7 @@ func TestFinish(t *testing.T) {
 			Type: PriorityParallelType,
 			Rules: []interface{}{
 				RuleA{State: Parallel, Priority: 2},
-				RuleB{State: Parallel, Priority: 4}, //v
+				RuleB{State: Parallel, Priority: 4},
 				RuleC{State: Parallel, Priority: 8},
 			},},
 	})
