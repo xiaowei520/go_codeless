@@ -59,10 +59,9 @@ type BaseScene struct {
 // get base scene info
 func (a *BaseScene) Get(req interface{}) *SceneOutput {
 	//if... scene 1
-	//if... scene 2
 	return &SceneOutput{
 		SceneId: 111,
-		Request: "业务处理返回的结果",
+		Request: "biz resp",
 	}
 }
 
@@ -90,8 +89,6 @@ type IRule interface {
 	Output(req interface{}) *RuleOutput
 }
 type RuleBase struct{}
-
-
 
 const (
 	PriorityParallelType = iota + 1
@@ -153,6 +150,7 @@ type PriorityGroup struct {
 }
 
 //2^(n-1) + 2^(n-2) ...n=len()
+//to be optimized   two bit  10&10
 func (p *PriorityGroup) Do(length uint32, sro *RuleOutput) {
 	atomic.AddUint32(&p.sum, sro.Priority)
 	atomic.AddUint32(&p.move, 2<<(length-atomic.AddUint32(&p.iterator, 1)))
@@ -224,8 +222,8 @@ func (w *WGroup) DoParallelGroup() (res []RuleOutput) {
 	return
 }
 
+//control group manager
 func WorkFlowManager(ruleFlow []interface{}) (res []RuleOutput) {
-	//control group manager
 	for ruleGroupIndex := 0; ruleGroupIndex < len(ruleFlow); ruleGroupIndex++ {
 		rule := ruleFlow[ruleGroupIndex]
 		item := []RuleOutput{}
@@ -247,27 +245,6 @@ func WorkFlowManager(ruleFlow []interface{}) (res []RuleOutput) {
 		}
 	}
 	return
-}
-
-// exec group
-func WorkFlow(ruleFlow []interface{}) {
-	//control group manager
-	for ruleGroupIndex := 0; ruleGroupIndex < len(ruleFlow); ruleGroupIndex++ {
-		rule := ruleFlow[ruleGroupIndex]
-		if wGroup, ok := rule.(WGroup); ok {
-			//check wGroup.type do
-			switch wGroup.Type {
-			//it's priority
-			case 1:
-				DoPriorityGroup(wGroup.Rules)
-			case 2:
-				DoSerialGroup(wGroup.Rules)
-			default:
-				WorkFlowGroup(wGroup.Rules)
-			}
-		}
-
-	}
 }
 
 func DoRule(rule interface{}) (*RuleOutput) {
