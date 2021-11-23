@@ -21,6 +21,92 @@ func init() {
 	log.SetOutput(ioutil.Discard)
 }
 
+type RuleA struct {
+	Request  interface{}
+	State    int //0 串行 1并行
+	Priority uint32
+}
+
+type RuleCommon struct {
+	State    int //0 串行 1并行
+	Priority uint32
+}
+type RuleB struct {
+	State    int //0 串行 1并行
+	Priority uint32
+}
+type RuleC struct {
+	State    int //0 串行 1并行
+	Priority uint32
+}
+type RuleD struct {
+	State    int //0 串行 1并行
+	Priority uint32
+}
+type RuleE struct {
+	State    int //0 串行 1并行
+	Priority uint32
+}
+
+//get 出当前规则是串行还是并行。
+func (a RuleA) Get() int {
+	return a.State
+}
+
+//规则A 确定要不要处理
+func (a RuleA) Output(req interface{}) *RuleOutput {
+	// if statu=1 and url!=""
+	fmt.Println("A had call,I should sleep 3s")
+	time.Sleep(3 * time.Second)
+	return &RuleOutput{
+		Status:   0, //0   1
+		Result:   "business A resp",
+		Priority: a.Priority,
+	}
+}
+
+//规则B 确定要不要处理
+func (a RuleB) Output(req interface{}) *RuleOutput {
+	fmt.Println("B had call,I should sleep 1s")
+	time.Sleep(1 * time.Second)
+	return &RuleOutput{
+		Status:   1,
+		Result:   "business B resp",
+		Priority: a.Priority,
+	}
+}
+func (a RuleC) Output(req interface{}) *RuleOutput {
+	fmt.Println("C had call,I should sleep 2s")
+	time.Sleep(2 * time.Second)
+	return &RuleOutput{
+		Status:   0,
+		Result:   "business C resp",
+		Priority: a.Priority,
+	}
+}
+
+func (a RuleE) Output(req interface{}) *RuleOutput {
+	fmt.Println("E had call,I should sleep 1s")
+	time.Sleep(1 * time.Second)
+	return &RuleOutput{
+		Status:   0,
+		Result:   "business E res",
+		Priority: a.Priority,
+	}
+}
+
+// URulePro's sceneID mapping ruleFlow
+// 缺点...固定好的编排
+var URulePro = map[int][]interface{}{
+	1: {
+		RuleE{State: Serial},
+		RuleA{State: Parallel},
+		RuleB{State: Parallel},
+		RuleC{State: Serial},
+		RuleD{State: Serial},
+	},
+}
+
 func TestFinish(t *testing.T) {
 	//v4---抽离串行、并行、优先级并行
 	//r := WorkFlowManager([]interface{}{
@@ -45,8 +131,6 @@ func TestFinish(t *testing.T) {
 	//			RuleC{State: Parallel, Priority: 8},
 	//		},},
 	//})
-	fmt.Println("第二次尝试---retry")
-	//return
 	r2 := WorkFlowManager([]interface{}{
 		//WGroup{
 		//	Type: SerialType,
@@ -66,72 +150,6 @@ func TestFinish(t *testing.T) {
 
 	return
 
-	//v3 -过于单一 没抽离并发和串行
-	WorkFlow([]interface{}{
-		WGroup{
-			Type: 0,
-			Rules:
-			[]interface{}{
-				RuleE{State: Serial},
-			},},
-		WGroup{
-			Type: 1,
-			Rules: []interface{}{
-				RuleA{State: Parallel, Priority: 2},
-				RuleB{State: Parallel, Priority: 8},
-				RuleC{State: Parallel, Priority: 4},
-			},},
-		WGroup{
-			Type: 1,
-			Rules: []interface{}{
-				RuleA{State: Parallel, Priority: 2},
-				RuleB{State: Parallel, Priority: 4},
-				RuleC{State: Parallel, Priority: 8},
-			},},
-	})
-	return
-	//v2
-	WorkFlow([]interface{}{
-		[]interface{}{
-			RuleE{State: Serial},
-		},
-
-		[]interface{}{
-			RuleA{State: Parallel, Priority: 1},
-			RuleA{State: Parallel},
-			RuleB{State: Parallel},
-		},
-		//RuleA{State: Parallel},
-		//RuleA{State: Parallel},
-		//RuleA{State: Parallel},
-		//RuleB{State: Parallel},
-		//RuleE{State: Serial},
-	})
-
-	// v1
-	//WorkFlowGroup([]interface{}{
-	//	RuleE{State: Serial},
-	//	RuleA{State: Parallel},
-	//	RuleA{State: Parallel},
-	//	RuleA{State: Parallel},
-	//	RuleB{State: Parallel},
-	//	RuleE{State: Serial},
-	//})
-
-	var total uint32
-	err := Finish(func() error {
-		atomic.AddUint32(&total, 2)
-		return nil
-	}, func() error {
-		atomic.AddUint32(&total, 3)
-		return nil
-	}, func() error {
-		atomic.AddUint32(&total, 5)
-		return nil
-	})
-
-	assert.Equal(t, uint32(10), atomic.LoadUint32(&total))
-	assert.Nil(t, err)
 }
 
 func TestFinishNone(t *testing.T) {

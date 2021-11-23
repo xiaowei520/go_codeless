@@ -10,7 +10,6 @@ import (
 	"github.com/tal-tech/go-zero/core/syncx"
 	"github.com/tal-tech/go-zero/core/threading"
 	"reflect"
-	"time"
 	"sync/atomic"
 )
 
@@ -92,93 +91,7 @@ type IRule interface {
 }
 type RuleBase struct{}
 
-type RuleA struct {
-	Request  interface{}
-	State    int //0 串行 1并行
-	Priority uint32
-}
 
-type RuleCommon struct {
-	State    int //0 串行 1并行
-	Priority uint32
-}
-type RuleB struct {
-	State    int //0 串行 1并行
-	Priority uint32
-}
-type RuleC struct {
-	State    int //0 串行 1并行
-	Priority uint32
-}
-type RuleD struct {
-	State    int //0 串行 1并行
-	Priority uint32
-}
-type RuleE struct {
-	State    int //0 串行 1并行
-	Priority uint32
-}
-
-//get 出当前规则是串行还是并行。
-func (a RuleA) Get() int {
-	return a.State
-}
-
-//规则A 确定要不要处理
-func (a RuleA) Output(req interface{}) *RuleOutput {
-	// if statu=1 and url!=""
-	fmt.Println("yes A had call，我要sleep 3秒")
-	time.Sleep(3 * time.Second)
-	return &RuleOutput{
-		Status:   0, //0   1
-		Result:   "业务A处理返回的结果",
-		Priority: a.Priority,
-	}
-}
-
-//规则B 确定要不要处理
-func (a RuleB) Output(req interface{}) *RuleOutput {
-	fmt.Println("yes B had call，我要sleep 1秒")
-	time.Sleep(1 * time.Second)
-	return &RuleOutput{
-		Status:   1,
-		Result:   "业务B处理返回的结果",
-		Priority: a.Priority,
-	}
-}
-func (a RuleC) Output(req interface{}) *RuleOutput {
-	fmt.Println("yes C had call，我要sleep 2秒")
-	time.Sleep(2 * time.Second)
-	return &RuleOutput{
-		Status:   0,
-		Result:   "业务C处理返回的结果",
-		Priority: a.Priority,
-	}
-}
-
-func (a RuleE) Output(req interface{}) *RuleOutput {
-	//handle
-	//rpc
-	fmt.Println("yes E had call，我要sleep 1秒")
-	time.Sleep(1 * time.Second)
-	return &RuleOutput{
-		Status:   0,
-		Result:   "业务E处理返回的结果",
-		Priority: a.Priority,
-	}
-}
-
-// URulePro's sceneID mapping ruleFlow
-// 缺点...固定好的编排
-var URulePro = map[int][]interface{}{
-	1: {
-		RuleE{State: Serial},
-		RuleA{State: Parallel},
-		RuleB{State: Parallel},
-		RuleC{State: Serial},
-		RuleD{State: Serial},
-	},
-}
 
 const (
 	PriorityParallelType = iota + 1
@@ -277,7 +190,7 @@ func (w *WGroup) DoPriorityGroup() (res []RuleOutput) {
 		}
 	}, func(pipe <-chan interface{}, cancel func(error)) {
 		for item := range pipe {
-			fmt.Println("你看吧 优先级有人先进来了", item)
+			fmt.Println("look priorityGroup item enter!", item)
 		}
 		//drain(pipe)
 	}, WithWorkers(len(fns)))
@@ -304,7 +217,7 @@ func (w *WGroup) DoParallelGroup() (res []RuleOutput) {
 		}
 	}, func(pipe <-chan interface{}, cancel func(error)) {
 		for item := range pipe {
-			fmt.Println("并发有人 进来了", item)
+			fmt.Println("look DoParallelGroup item enter！", item)
 		}
 		//drain(pipe)
 	}, WithWorkers(len(fns)))
@@ -415,7 +328,7 @@ func DoPriorityGroup(ruleFlow []interface{}) {
 						// 2^(n-1) + 2^(n-2) ... n=len()
 						atomic.AddUint32(&judge, 2<<(uint32(len(ruleFlow))-atomic.AddUint32(&iterator, 1)))
 
-						fmt.Println("total", sumPriority, " iterator", iterator, " judge ", judge)
+						//fmt.Println("total", sumPriority, " iterator", iterator, " judge ", judge)
 						if sOutput.Status == RuleErrorStatus && sMaxReturn.Priority < sOutput.Priority {
 							sMaxReturn = sOutput
 						}
@@ -427,7 +340,7 @@ func DoPriorityGroup(ruleFlow []interface{}) {
 						}
 					}, func(pipe <-chan interface{}, cancel func(error)) {
 						for item := range pipe {
-							fmt.Println("你看吧 优先级有人先进来了", item)
+							fmt.Println("look priorityGroup item enter!", item)
 						}
 						//drain(pipe)
 					}, WithWorkers(len(fns)))
@@ -453,7 +366,7 @@ func WorkFlowGroup(ruleFlow []interface{}) {
 		state := reflect.ValueOf(rule).FieldByName("State").Int()
 		//Serial do
 		if state == Serial {
-			fmt.Println("不好意思 我被call 了")
+			fmt.Println(" Serial had call")
 			res := reflect.ValueOf(rule).MethodByName("Output").
 				Call([]reflect.Value{reflect.ValueOf(2)})
 			sOutput := (res[0]).Interface().(*RuleOutput)
