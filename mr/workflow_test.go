@@ -96,7 +96,6 @@ func (a RuleE) Output(req interface{}) *RuleOutput {
 }
 
 // URulePro's sceneID mapping ruleFlow
-// 缺点...固定好的编排
 var URulePro = map[int][]interface{}{
 	1: {
 		RuleE{State: Serial},

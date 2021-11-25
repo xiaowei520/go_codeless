@@ -47,37 +47,6 @@ type RuleOutput struct {
 	Error    error
 }
 
-// 场景识别
-type IScene interface {
-	Get(interface{}) *SceneOutput
-}
-
-// BaseScene
-type BaseScene struct {
-}
-
-// get base scene info
-func (a *BaseScene) Get(req interface{}) *SceneOutput {
-	//if... scene 1
-	return &SceneOutput{
-		SceneId: 111,
-		Request: "biz resp",
-	}
-}
-
-// OtherScene
-type OtherScene struct {
-}
-
-// SceneOutput  is scene's info
-type SceneOutput struct {
-	SceneId int
-	//...规则引擎
-	//串行A 串行B 并行C 并行D 并行E 串行F 串行G ---  map配置
-	Request interface{}
-	Result  interface{}
-}
-
 const (
 	Serial   = 0 //串行
 	Parallel = 1 //并行
