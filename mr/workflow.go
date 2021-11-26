@@ -48,10 +48,11 @@ type RuleOutput struct {
 }
 
 const (
-	Serial   = 0 //串行
-	Parallel = 1 //并行
+	Serial   = 0
+	Parallel = 1
 
-	RuleErrorStatus = 1 //1 rule rpc fail or biz fail
+	//1 rule rpc fail or biz fail
+	RuleErrorStatus = 1
 )
 
 type IRule interface {
@@ -118,7 +119,7 @@ type PriorityGroup struct {
 	Optimal  RuleOutput
 }
 
-//2^(n-1) + 2^(n-2) ...n=len()
+//n=len | 2^(n-1) + 2^(n-2) ...
 //to be optimized   two bit  10&10
 func (p *PriorityGroup) Do(length uint32, sro *RuleOutput) {
 	atomic.AddUint32(&p.sum, sro.Priority)
@@ -271,9 +272,8 @@ func DoPriorityGroup(ruleFlow []interface{}) {
 						sOutput := DoRule(item)
 						//.... max priority
 						atomic.AddUint32(&sumPriority, sOutput.Priority)
-						// 2^(n-1) + 2^(n-2) ... n=len()
+						// 2^(n-1) + 2^(n-2)
 						atomic.AddUint32(&judge, 2<<(uint32(len(ruleFlow))-atomic.AddUint32(&iterator, 1)))
-
 						//fmt.Println("total", sumPriority, " iterator", iterator, " judge ", judge)
 						if sOutput.Status == RuleErrorStatus && sMaxReturn.Priority < sOutput.Priority {
 							sMaxReturn = sOutput
@@ -302,10 +302,8 @@ func DoPriorityGroup(ruleFlow []interface{}) {
 	}
 }
 
-// 组概念 抽象 group interface{}
-// 并行优先级组的东西、、是否拿到所有并行场景的result结果
-// WorkFlow
-// 解析组
+// WorkFlowGroup exec
+// Parallel do request then get response
 func WorkFlowGroup(ruleFlow []interface{}) {
 	for ruleIndex := 0; ruleIndex < len(ruleFlow); ruleIndex++ {
 		rule := ruleFlow[ruleIndex]
@@ -338,10 +336,9 @@ func WorkFlowGroup(ruleFlow []interface{}) {
 						}
 					}, func(item interface{}, writer Writer, cancel func(error)) {
 						fn := reflect.ValueOf(item).MethodByName("Output")
-						//res [<*mr.RuleOutput Value>]
 						res := fn.Call([]reflect.Value{reflect.ValueOf(2)})
 						sOutput := (res[0]).Interface().(*RuleOutput)
-						if sOutput.Status == RuleErrorStatus { //
+						if sOutput.Status == RuleErrorStatus {
 							//cancel(sOutput.Error)
 							//iterator...
 						}
@@ -360,7 +357,7 @@ func WorkFlowGroup(ruleFlow []interface{}) {
 	}
 }
 
-//解析器。。来决策是串行还是并行。
+//explain run type
 func Run() {
 
 }
